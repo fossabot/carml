@@ -1,0 +1,29 @@
+FROM mxnet/python
+MAINTAINER Carl Pearson <pearson@illinois.edu>
+
+# Install the core library
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y \
+    curl \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Run makefile
+ENV GOROOT /usr/local/go
+ENV PATH "$GOROOT/bin:$PATH"
+ENV GOPATH "/go"
+ENV LD_LIBRARY_PATH="/mxnet/lib:${LD_LIBRARY_PATH}"
+
+COPY Makefile.amd64-cpu Makefile
+RUN make
+
+ENTRYPOINT ["./mxnet-agent", "--debug", "--verbose"]
+
+## Data needed for $GOPATH/src/github.com/songtiyani/examples/flower
+# RUN mkdir /data
+# RUN cd /data && wget https://www.dropbox.com/s/7l8zye9jpv2bywu/102flowers-0260.params
+# RUN cd /data && wget https://www.dropbox.com/s/507hikz8561hwxg/102flowers-symbol.json
+# RUN cd /data && wget https://www.dropbox.com/s/rg45ma97x886i53/mean.bin
+# RUN cd /data && wget https://www.dropbox.com/s/9ej43gpkcdw3q32/flowertest.jpg

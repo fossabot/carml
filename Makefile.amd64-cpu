@@ -1,0 +1,50 @@
+all: agent
+
+glide:
+	apt-get update
+	apt-get install -y software-properties-common
+	add-apt-repository ppa:masterminds/glide
+	apt-get update
+	apt-get install -y glide
+
+go:
+	VERSION=1.8.3 ;\
+	OS=linux ;\
+	ARCH=amd64 ;\
+	NAME="go$$VERSION.$$OS-$$ARCH.tar.gz" ;\
+	curl -fsSL https://storage.googleapis.com/golang/$$NAME -O ;\
+	tar -C /usr/local -xf $$NAME ;\
+	mkdir -p $$GOPATH
+
+mxnet-go: go
+	go get -u -v github.com/songtianyi/go-mxnet-predictor
+	sed -i "/prefix=/c prefix=\/mxnet" ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc
+	cp ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig
+	pkg-config --libs mxnet
+	cd ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor
+	go get -v .../.
+
+agent: glide mxnet-go
+	## Get the rai-project mxnet agent
+	cd ${GOPATH}/src/github.com/rai-project
+	git clone https://github.com/rai-project/dlframework.git
+	## Uncomment the following 3 lines to use the local mxnet-agent instead of the github version
+	# WORKDIR dlframework/mxnet/mxnet-agent
+	# RUN rm -rf *
+	# ADD *.go ./
+	cd ${GOPATH}/src/github.com/rai-project/dlframework
+	glide install
+	cd ${GOPATH}/src/github.com/rai-project/mxnet/mxnet-agent
+	go build
+
+cleanup:
+	apt-get clean
+	rm -rf /var/lib/apt/lists/*
+	rm $$NAME
+
+## Data needed for $GOPATH/src/github.com/songtiyani/examples/flower
+# RUN mkdir /data
+# RUN cd /data && wget https://www.dropbox.com/s/7l8zye9jpv2bywu/102flowers-0260.params
+# RUN cd /data && wget https://www.dropbox.com/s/507hikz8561hwxg/102flowers-symbol.json
+# RUN cd /data && wget https://www.dropbox.com/s/rg45ma97x886i53/mean.bin
+# RUN cd /data && wget https://www.dropbox.com/s/9ej43gpkcdw3q32/flowertest.jpg

@@ -3,8 +3,11 @@ package web
 import (
 	"net/http"
 
+	"google.golang.org/grpc/grpclog"
+
 	"github.com/labstack/echo"
 	"github.com/rai-project/config"
+	"github.com/rai-project/dlframework/mxnet/agent"
 )
 
 func apiRoutes(e *echo.Echo) error {
@@ -19,13 +22,13 @@ func apiRoutes(e *echo.Echo) error {
 	}
 	api.Any("/upload/*", uploadHandler)
 
-	// server := agent.Register()
-	// grpclog.SetLogger(log.WithField("subpkg", "grpclog"))
-	// wrappedGrpc := grpcweb.WrapServer(server)
-	// api.GET("/mxnet/endpoints.json", func(c echo.Context) error {
-	// 	return c.JSON(http.StatusOK, grpcweb.ListGRPCResources(server))
-	// })
-	// api.Any("/mxnet/*", StripPrefix("/api/mxnet", echo.WrapHandler(wrappedGrpc)))
+	server := agent.Register()
+	grpclog.SetLogger(log.WithField("subpkg", "grpclog"))
+	wrappedGrpc := grpcweb.WrapServer(server)
+	api.GET("/mxnet/endpoints.json", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, grpcweb.ListGRPCResources(server))
+	})
+	api.Any("/mxnet/*", StripPrefix("/api/mxnet", echo.WrapHandler(wrappedGrpc)))
 
 	return nil
 }
