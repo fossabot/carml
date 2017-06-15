@@ -21,21 +21,20 @@ mxnet-go: go
 	sed -i "/prefix=/c prefix=\/mxnet" ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc
 	cp ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor/travis/mxnet.pc /usr/lib/pkgconfig
 	pkg-config --libs mxnet
-	cd ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor
-	go get -v .../.
+	cd ${GOPATH}/src/github.com/songtianyi/go-mxnet-predictor && go get -v .../.
 
-agent: glide mxnet-go
+rai-project:
+	mkdir -p ${GOPATH}/src/github.com/rai-project
+
+agent: glide mxnet-go rai-project
 	## Get the rai-project mxnet agent
-	cd ${GOPATH}/src/github.com/rai-project
-	git clone https://github.com/rai-project/dlframework.git
+	git clone https://github.com/rai-project/dlframework.git ${GOPATH}/src/github.com/rai-project/dlframework
 	## Uncomment the following 3 lines to use the local mxnet-agent instead of the github version
 	# WORKDIR dlframework/mxnet/mxnet-agent
 	# RUN rm -rf *
 	# ADD *.go ./
-	cd ${GOPATH}/src/github.com/rai-project/dlframework
-	glide install
-	cd ${GOPATH}/src/github.com/rai-project/mxnet/mxnet-agent
-	go build
+	cd ${GOPATH}/src/github.com/rai-project/dlframework && glide install
+	cd ${GOPATH}/src/github.com/rai-project/dlframework/frameworks/mxnet/mxnet-agent && go build
 
 cleanup:
 	apt-get clean
